@@ -4,9 +4,110 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/alecthomas/assert"
 )
+
+func TestTypes(t *testing.T) {
+	// Test that everything goes fine
+	type Mystruct struct {
+		Int      int           `default:"10"`
+		String   string        `default:"str"`
+		Bool     bool          `default:"true"`
+		UInt     uint          `default:"10"`
+		Int64    int64         `default:"10"`
+		Float32  float32       `default:"1.10"`
+		Float64  float64       `default:"1.10"`
+		Duration time.Duration `default:"1h"`
+	}
+	in := Mystruct{}
+	err := Parse(&in)
+	assert.NoError(t, err, "error should be nil")
+	assert.Equal(t, in.Int, 10)
+	assert.Equal(t, in.Int64, int64(10))
+	assert.Equal(t, in.String, "str")
+	assert.Equal(t, in.Bool, true)
+	assert.Equal(t, in.Float32, float32(1.10))
+	assert.Equal(t, in.Float64, 1.10)
+	assert.Equal(t, in.Duration, time.Hour)
+
+	tests := []struct {
+		name  string
+		good  interface{}
+		wrong interface{}
+	}{
+		{
+			"integer test",
+			&struct {
+				Int int `default:"10"`
+			}{},
+			&struct {
+				Int int `default:"xxxx"`
+			}{},
+		},
+		{
+			"bool test",
+			&struct {
+				Out bool `default:"true"`
+			}{},
+			&struct {
+				Out bool `default:"xxxx"`
+			}{},
+		},
+		{
+			"uint test",
+			&struct {
+				Out uint `default:"1"`
+			}{},
+			&struct {
+				Out uint `default:"xxxx"`
+			}{},
+		},
+		{
+			"int64 test",
+			&struct {
+				Out int64 `default:"1"`
+			}{},
+			&struct {
+				Out int64 `default:"xxxx"`
+			}{},
+		},
+		{
+			"float32 test",
+			&struct {
+				Out float32 `default:"1.10"`
+			}{},
+			&struct {
+				Out float32 `default:"xxxx"`
+			}{},
+		},
+		{
+			"float64 test",
+			&struct {
+				Out float64 `default:"1.10"`
+			}{},
+			&struct {
+				Out float64 `default:"xxxx"`
+			}{},
+		},
+		{
+			"duration test",
+			&struct {
+				Out time.Duration `default:"1h"`
+			}{},
+			&struct {
+				Out time.Duration `default:"xxxx"`
+			}{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Error(t, Parse(tt.wrong))
+			assert.NoError(t, Parse(tt.good))
+		})
+	}
+}
 
 func TestParse(t *testing.T) {
 	var err error
